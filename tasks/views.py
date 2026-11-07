@@ -1,31 +1,63 @@
+
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 from .models import Task
+from datetime import date
+
 
 def task_list(request):
-    # 1. Did the user just submit the form?
     if request.method == "POST":
-        # Grab the text they typed into the input field named 'title'
-        task_title = request.POST.get("title")
-        
-        # Create a new row in the SQL database
-        Task.objects.create(title=task_title)
-        
-        # Refresh the page so they don't submit the same form twice by accident
-        return redirect("task_list")
-        
-    # 2. If they just loaded the page normally, grab the pending tasks
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        due_date_str = request.POST.get("due_date") or None
+        priority = request.POST.get("priority")
+        color = request.POST.get("color")
+
+        # Convert the submitted date
+        due_date = None
+
+        if due_date_str:
+            try:
+                due_date = date.fromisoformat(due_date_str)
+            except ValueError:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Please enter a valid due date."
+                }, status=400)
+
+            # Validate the due date
+            if due_date < timezone.localdate():
+                return JsonResponse({
+                    "success": False,
+                    "error": "You cannot create a task with a due date in the past!"
+                }, status=400)
+
+        # Create task if validation passes
+        Task.objects.create(
+            title=title,
+            description=description,
+            due_date=due_date,
+            priority=priority,
+            color=color
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": "Task created successfully!"
+        })
+
     tasks = Task.objects.filter(is_completed=False)
-    return render(request, "tasks/task_list.html", {"tasks": tasks})
+
+    return render(request, "tasks/task_list.html", {
+        "tasks": tasks
+    })
+
 
 def complete_task(request, task_id):
-    # Find the specific task in the database using its unique ID
     task = Task.objects.get(id=task_id)
-    
-    # Change its status to True
     task.is_completed = True
-    
-    # Save the change to the database
     task.save()
-    
-    # Send the user back to the main list
+
     return redirect("task_list")

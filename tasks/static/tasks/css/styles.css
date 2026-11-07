@@ -1,0 +1,19 @@
+/* Custom styles for your Task Manager */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* A subtle custom scrollbar for your sidebar queue */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
